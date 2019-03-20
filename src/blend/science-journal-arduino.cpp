@@ -64,9 +64,9 @@ void loop() {
   goosciBle.pollACI();
   if (goosciBle.isReadyToSend()) {
     int sensorValue = 0;
-    if (pin_type == ANALOG) {
+    if (pin_type == P_ANALOG) {
       sensorValue = analogRead(pin);
-    } else if (pin_type == DIGITAL) {
+    } else if (pin_type == P_DIGITAL) {
       sensorValue = digitalRead(pin);
     } else {
       sensorValue = 666;
