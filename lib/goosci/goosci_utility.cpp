@@ -87,9 +87,10 @@ void send_data(BLECharacteristic* characteristic, unsigned long timestamp_key, i
       memcpy((void*)(packet + 2), buffer + ii * max_packet_size, current_packet_size);
 
 #if defined(ARDUINO_ARCH_ESP32)
-      DEBUG_PRINTLN("ESP32 sending.");
+      //DEBUG_PRINTLN("ESP32 sending.");
       characteristic->setValue(packet, current_packet_size+2);
       characteristic->notify();
+      delay(3);
 #else
       /* If send fails then we give up */
       if (!characteristic.setValue(packet, current_packet_size+2)) {

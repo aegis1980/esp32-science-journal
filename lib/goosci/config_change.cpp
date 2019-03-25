@@ -43,11 +43,7 @@ bool decode_pin(pb_istream_t *stream, const pb_field_t *field, void * *arg) {
   return true;
 }
 
-#if defined(ARDUINO_ARCH_ESP32)
-void handle(uint8_t* data) {
-#else
 void handle(uint8_t* data, int8_t length) {
-#endif
   int8_t size = data[0];
   bool last = data[1] == 1;
   memcpy(sensorConfig, data + 2, size);

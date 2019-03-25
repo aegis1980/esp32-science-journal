@@ -15,9 +15,10 @@
  */
 
 #include <Arduino.h>
+
 #include <BLEDevice.h>
 #include <BLEServer.h>
-#include <BLEUtils.h>
+#include <BLE2902.h>
 #include "WiFi.h"
 
 #include <pb.h>
@@ -27,43 +28,61 @@
 #include "heartbeat.h"
 #include "sensor.pb.h"
 
-
-#define WHISTLEPUNK_UUID "555a0001-0aaa-467a-9538-01f0652c74e8"
-//const short int version = goosci_Version_Version_LATEST;
-BLEServer* pServer = NULL;
-//BLEService* whistlepunkService = NULL;
+#define WHISTLEPUNK_SERVICE_UUID "555a0001-0aaa-467a-9538-01f0652c74e8"
 BLECharacteristic* valueCharacteristic = NULL;
-BLECharacteristic* configCharacteristic = NULL;
-BLECharacteristic* versionCharacteristic = NULL;
 
 bool deviceConnected = false;
 String BleLongName;
 extern PinType pin_type;
 extern int pin;
+int interval = 1000; // how often we pin via serial
+long previousMillis = 0;
 
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
-      DEBUG_PRINTLN("BLE Connected");
+      DEBUG_PRINTLN("BLE Client Connected");
       deviceConnected = true;
-      BLEDevice::startAdvertising();
     };
 
     void onDisconnect(BLEServer* pServer) {
-      DEBUG_PRINTLN("BLE Disconnected");
+      DEBUG_PRINTLN("BLE Client Disconnected");
       deviceConnected = false;
-    }
-
-    void onWrite(BLECharacteristic *pCharacteristic) {
-      DEBUG_PRINTLN("config change event");
-      //std::string v = pCharacteristic->getValue();
-      uint8_t* v = pCharacteristic->getData();
-      handle(v);
     }
 };
 
+class ValueCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      DEBUG_PRINTLN("valueCharacteristic onWrite()");
+    }
+
+    void onRead(BLECharacteristic *pCharacteristic) {
+      DEBUG_PRINTLN("valueCharacteristic onRead()");
+    }
+};
+
+class VersionCallbacks: public BLECharacteristicCallbacks {
+    void onRead(BLECharacteristic *pCharacteristic) {
+       DEBUG_PRINTLN("versionCharacteristic onRead()");
+    }
+};
+
+class ConfigCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      DEBUG_PRINTLN("configCharacteristic onWrite()");
+      uint8_t* v = pCharacteristic->getData();
+      handle(v, sizeof(v));
+    }
+
+    void onRead(BLECharacteristic *pCharacteristic) {
+      DEBUG_PRINTLN("configCharacteristic onRead()");
+    }
+};
 
 void setup() {
   wait_for_serial();
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("Science Journal ESP32 Startup");
 
   // I can't seem to initialize the Bluetooth Radio and then change the broadcast
   // name, so we're going to use the WiFi MAC Address instead
@@ -72,6 +91,7 @@ void setup() {
   WiFi.mode(WIFI_OFF);
 
   address.toUpperCase();
+  DEBUG_PRINT("WiFi MAC Address: ");
   DEBUG_PRINTLN(address);
   BleLongName = "Sci";
   BleLongName += address[address.length() - 5];
@@ -93,37 +113,46 @@ void setup() {
 */
 
   BLEDevice::init(BleLongName.c_str());
-  DEBUG_PRINT("Address is: ");
+  DEBUG_PRINT("BLE Name: ");
   DEBUG_PRINTLN(BleLongName);
 
-  pServer = BLEDevice::createServer();
+  BLEServer *pServer = BLEDevice::createServer();
   pServer->setCallbacks(new MyServerCallbacks());
 
-  BLEService *whistlepunkService = pServer->createService(WHISTLEPUNK_UUID);
-  valueCharacteristic = whistlepunkService->createCharacteristic(WHISTLEPUNK_UUID, BLECharacteristic::PROPERTY_NOTIFY);
-  configCharacteristic = whistlepunkService->createCharacteristic(WHISTLEPUNK_UUID, BLECharacteristic::PROPERTY_WRITE);
-  versionCharacteristic = whistlepunkService->createCharacteristic(WHISTLEPUNK_UUID, BLECharacteristic::PROPERTY_READ);
+  BLEService *whistlepunkService = pServer->createService(WHISTLEPUNK_SERVICE_UUID);
+  valueCharacteristic = whistlepunkService->createCharacteristic("555a0003-0aaa-467a-9538-01f0652c74e8", BLECharacteristic::PROPERTY_NOTIFY);
+  BLECharacteristic *configCharacteristic = whistlepunkService->createCharacteristic("555a0010-0aaa-467a-9538-01f0652c74e8", BLECharacteristic::PROPERTY_WRITE);
+  BLECharacteristic *versionCharacteristic = whistlepunkService->createCharacteristic("555a0011-0aaa-467a-9538-01f0652c74e8", BLECharacteristic::PROPERTY_READ);
 
-  //versionCharacteristic->setValue((int)goosci_Version_Version_LATEST);
-  int version = (int)goosci_Version_Version_LATEST;
-  DEBUG_PRINT("Version: ");
-  DEBUG_PRINTLN(version);
-  versionCharacteristic->setValue(version);
+  valueCharacteristic->addDescriptor(new BLE2902());
+  valueCharacteristic->setCallbacks(new ValueCallbacks());
+
+  configCharacteristic->addDescriptor(new BLE2902());
+  configCharacteristic->setCallbacks(new ConfigCallbacks());
+
+  versionCharacteristic->addDescriptor(new BLE2902());
+  versionCharacteristic->setCallbacks(new VersionCallbacks());
 
   // start the service
   whistlepunkService->start();
 
+  int version = (int)goosci_Version_Version_LATEST;
+  DEBUG_PRINT("Protocol Version: ");
+  DEBUG_PRINTLN(version);
+  versionCharacteristic->setValue(version);
+
   // Start advertising
-  BLEAdvertising *pAdvertising = pServer->getAdvertising();
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(WHISTLEPUNK_SERVICE_UUID);
   pAdvertising->start();
+  DEBUG_PRINT("BLE Advertising.");
 }
 
 void loop() {
-  DEBUG_PRINT(F("LongName: "));
-  DEBUG_PRINTLN(BleLongName);
+  unsigned long currentMillis = millis();
+  uint32_t sensorValue = 0;
 
   if (deviceConnected) {
-    uint32_t sensorValue = 0;
     if (pin_type == P_ANALOG) {
       sensorValue = analogRead(pin);
     } else if (pin_type == P_DIGITAL) {
@@ -131,12 +160,19 @@ void loop() {
     } else {
       sensorValue = 666;
     }
-    DEBUG_PRINT("SensorValue: ");
-    DEBUG_PRINTLN(sensorValue);
-    send_data(valueCharacteristic, millis(), sensorValue);
+
+    if(currentMillis - previousMillis > interval) {
+      previousMillis = currentMillis;
+      DEBUG_PRINT("Pin: ");
+      DEBUG_PRINT(pin);
+      DEBUG_PRINT(" SensorValue: ");
+      DEBUG_PRINTLN(sensorValue);
+    }
+     send_data(valueCharacteristic, millis(), sensorValue);
+  } else {
+    if(currentMillis - previousMillis > interval) {
+      previousMillis = currentMillis;
+      DEBUG_PRINT("."); // just to let us know its alive via serial console
+    }
   }
-#ifdef GOOSCI_DEVELOPER_MODE
-  heartbeat();
-#endif
-  delay(2000);
 }

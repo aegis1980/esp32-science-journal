@@ -22,7 +22,7 @@
 #endif 
 
 #if defined(ARDUINO_ARCH_ESP32)
-  #include <BLEUtils.h>
+  #include <BLECharacteristic.h>
   void send_data(BLECharacteristic* characteristic, unsigned long timestamp, int value);
 #endif
 
