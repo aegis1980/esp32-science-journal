@@ -70,7 +70,8 @@ class ConfigCallbacks: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) {
       DEBUG_PRINTLN("configCharacteristic onWrite()");
       uint8_t* v = pCharacteristic->getData();
-      handle(v, sizeof(v));
+
+      handle(v, sizeof(v)/sizeof(uint8_t));
     }
 
     void onRead(BLECharacteristic *pCharacteristic) {
@@ -163,6 +164,14 @@ void loop() {
 
     if(currentMillis - previousMillis > interval) {
       previousMillis = currentMillis;
+      if (pin_type == P_ANALOG) {
+        DEBUG_PRINT("Analog ");
+      } else if (pin_type == P_DIGITAL) {
+        DEBUG_PRINT("Digital ");
+      } else {
+        DEBUG_PRINT("Unknown ");
+      }
+
       DEBUG_PRINT("Pin: ");
       DEBUG_PRINT(pin);
       DEBUG_PRINT(" SensorValue: ");
