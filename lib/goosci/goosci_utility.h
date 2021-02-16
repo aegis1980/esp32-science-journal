@@ -19,6 +19,11 @@
 #if defined(__ARDUINO_ARC__)
   #include <CurieBLE.h>
   void send_data(BLECharacteristic& characteristic, unsigned long timestamp, int value);
+#endif 
+
+#if defined(ARDUINO_ARCH_ESP32)
+  #include <BLECharacteristic.h>
+  void send_data(BLECharacteristic* characteristic, unsigned long timestamp, int value);
 #endif
 
 #if defined(__AVR_ATmega32U4__)

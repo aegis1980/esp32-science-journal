@@ -21,7 +21,7 @@
 
 #define SENSOR_CONFIG_SIZE 20
 
-PinType pin_type = ANALOG;
+PinType pin_type = P_ANALOG;
 int pin = A0;
 static uint8_t sensorConfig[SENSOR_CONFIG_SIZE];
 
@@ -31,14 +31,14 @@ bool decode_pin(pb_istream_t *stream, const pb_field_t *field, void * *arg) {
     return false;
 
   if (sp.which_pin == goosci_Pin_analog_pin_tag) {
-    pin_type = ANALOG;
+    pin_type = P_ANALOG;
     pin = sp.pin.analog_pin.pin;
   } else if (sp.which_pin == goosci_Pin_digital_pin_tag) {
-    pin_type = DIGITAL;
+    pin_type = P_DIGITAL;
     pin = sp.pin.digital_pin.pin;
     pinMode(pin, INPUT);
   } else {
-    pin_type = VIRTUAL;
+    pin_type = P_VIRTUAL;
   }
   return true;
 }

@@ -29,7 +29,7 @@ void wait_for_serial(void) {
 #else
   Serial.begin(115200);
 #endif
-#if defined(__ARDUINO_ARC__)
+#if defined(__ARDUINO_ARC__) || defined(ARDUINO_ARCH_ESP32)
   Serial.begin(115200);
 #endif
 }
@@ -47,8 +47,11 @@ void send_data(GoosciBleGatt &goosciBle, unsigned long timestamp_key, int value)
 #elif defined(__ARDUINO_ARC__) || defined(ARDUINO_AVR_MEGA2560) || defined(ARDUINO_AVR_UNO)
 uint8_t packet[BTLE_BUFFER_SIZE];
 void send_data(BLECharacteristic& characteristic, unsigned long timestamp_key, int value) {
+#elif defined(ARDUINO_ARCH_ESP32)
+uint8_t packet[BTLE_BUFFER_SIZE];
+void send_data(BLECharacteristic* characteristic, unsigned long timestamp_key, int value) {
 #endif
-  stream = pb_ostream_from_buffer(buffer, BUFFER_LEN);
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, BUFFER_LEN);
 
   sd.timestamp_key = timestamp_key; // timestamp
   sd.which_result = (pb_size_t)goosci_SensorData_data_tag;
@@ -62,21 +65,6 @@ void send_data(BLECharacteristic& characteristic, unsigned long timestamp_key, i
     DEBUG_PRINT(F("Encoding failed: "));
     DEBUG_PRINTLN(PB_GET_ERROR(&stream));
   } else {
-    /*
-    DEBUG_PRINT(F("send_data timestamp: "));
-    DEBUG_PRINTLN(sd.timestamp_key);
-    DEBUG_PRINT(F("send_data value: "));
-    DEBUG_PRINTLN(value);
-    DEBUG_PRINT(F("size: "));
-    DEBUG_PRINT(stream.bytes_written);
-    DEBUG_PRINTLN(F(" bytes."));
-    String s;
-    for (unsigned int i = 0; i < stream.bytes_written; ++i) {
-      s += String(buffer[i], HEX);
-      if ((i-1) % 2 == 0) s += " ";
-    }
-    DEBUG_PRINTLN(s.c_str());
-    */
 #if defined(__AVR_ATmega32U4__)
     goosciBle.sendData((const char *)buffer, stream.bytes_written);
 #else
@@ -98,11 +86,18 @@ void send_data(BLECharacteristic& characteristic, unsigned long timestamp_key, i
       packet[1] = is_last_packet;
       memcpy((void*)(packet + 2), buffer + ii * max_packet_size, current_packet_size);
 
+#if defined(ARDUINO_ARCH_ESP32)
+      //DEBUG_PRINTLN("ESP32 sending.");
+      characteristic->setValue(packet, current_packet_size+2);
+      characteristic->notify();
+      delay(3);
+#else
       /* If send fails then we give up */
       if (!characteristic.setValue(packet, current_packet_size+2)) {
         DEBUG_PRINTLN("Send of packet failed.");
         break;
       }
+#endif
     }
 #endif
   }

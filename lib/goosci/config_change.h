@@ -18,9 +18,9 @@
 
 #include <pb_decode.h>
 enum PinType {
-  ANALOG = 1,
-  DIGITAL = 2,
-  VIRTUAL = 3,
+  P_ANALOG = 1,
+  P_DIGITAL = 2,
+  P_VIRTUAL = 3,
 };
 
 
