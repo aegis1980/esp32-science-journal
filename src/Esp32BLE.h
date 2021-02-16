@@ -74,6 +74,10 @@ class Esp32BLE {
     public:
         bool connected = false;
         void init() {
+            wait_for_serial();
+            DEBUG_PRINTLN("");
+            DEBUG_PRINTLN("");
+            DEBUG_PRINTLN("Esp32Ble Startup");
               // I can't seem to initialize the Bluetooth Radio and then change the broadcast
             // name, so we're going to use the WiFi MAC Address instead
             WiFi.mode(WIFI_MODE_STA);
