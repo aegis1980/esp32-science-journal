@@ -1,0 +1,39 @@
+{
+    "name": "SciJoEsp32BLE",
+    "version": "1.0.0",
+    "description": "",
+    "keywords": "planet, happiness, people",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/username/hello-world.git"
+    },
+    "dependencies": [
+        {
+            "owner" :  "nanopb",
+            "name" : "Nanopb",
+            "version" : "@0.3.7"
+        },
+        {
+            "owner" :  "nkolban",
+            "name" : "ESP32 BLE Arduino",
+            "version" : "*"
+        }
+    ],
+    "examples": [
+        {
+            "name": "Hello",
+            "base": "examples/main",
+            "files": [
+                "platformio.ini",
+                "include/world.h",
+                "src/main.ccp"
+            ]
+        }
+    ],
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "build": {
+        "flags" : "-DPIO_FRAMEWORK_ESP_IDF_ENABLE_EXCEPTIONS"
+    }
+  }
