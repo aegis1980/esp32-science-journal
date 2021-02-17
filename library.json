@@ -1,13 +1,8 @@
 {
     "name": "SciJoEsp32BLE",
     "version": "1.0.0",
-    "description": "",
+    "description": "ESP32 comms with Science Journal app",
     "keywords": "planet, happiness, people",
-    "repository":
-    {
-      "type": "git",
-      "url": "https://github.com/username/hello-world.git"
-    },
     "dependencies": [
         {
             "owner" :  "nanopb",
@@ -20,20 +15,21 @@
             "version" : "*"
         }
     ],
-    "examples": [
+    "examples":[
         {
-            "name": "Hello",
-            "base": "examples/main",
+            "name": "main",
+            "base": "examples",
             "files": [
-                "platformio.ini",
-                "include/world.h",
-                "src/main.ccp"
+                "main.cpp",
+                "platformio.ini"
             ]
         }
     ],
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/aegis1980/science-journal-esp32.git"
+    },
     "frameworks": "arduino",
-    "platforms": "espressif32",
-    "build": {
-        "flags" : "-DPIO_FRAMEWORK_ESP_IDF_ENABLE_EXCEPTIONS"
-    }
+    "platforms": "espressif32"
   }
