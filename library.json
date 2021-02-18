@@ -8,12 +8,7 @@
             "owner" :  "nanopb",
             "name" : "Nanopb",
             "version" : "@0.3.7"
-        },
-        {
-            "owner" :  "nkolban",
-            "name" : "ESP32 BLE Arduino",
-            "version" : "*"
-        }
+         }
     ],
     "examples":[
         {

@@ -24,7 +24,7 @@
  * previous authors and their licenses.
  * 
  */
-
+#include <Arduino.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLE2902.h>
@@ -34,7 +34,6 @@
 #include "goosci_utility.h"
 #include "debug_print.h"
 #include "config_change.h"
-#include "heartbeat.h"
 #include "sensor.pb.h"
 
 

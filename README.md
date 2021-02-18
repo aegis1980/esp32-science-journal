@@ -1,16 +1,37 @@
-This is nothing more than a tinker on the [code here by Uriah Welcome](https://github.com/precision/science-journal-arduino/tree/esp32) with the aim of using Science Journal as a quick and easy way of assessing 'whatever' is connected to ESP32.
+# ESP32 talking to Arduino Science Journal App 
 
-Main changes:
+This is nothing more than a refactoring of the [code here by Uriah Welcome](https://github.com/precision/science-journal-arduino/tree/esp32) which added ESP32 as an option to the original [Science Journal Arduino repo][sj-arduino].
 
-* Bring it in line with PlatformIO 2021 (CORE 5.x)
-* ESP32 only...refer to [original repo her](https://github.com/google/science-journal-arduino) for other platforms/boards
-* Refactor so ESP32 BLE code in a separate file, to make more easily reusable.
+## What does this code do?
 
-This project, uploaded to an ESP32 means ESP32 pin data can be sent to the Arduino Science Journal app ([Android](https://play.google.com/store/apps/details?id=cc.arduino.sciencejournal) and [iOS](https://apps.apple.com/us/app/arduino-science-journal/id1518014927)).
+Let's you set up a quick and easy BLE connection between your ESP32 device and the Arduino Science Journal app ([Android](https://play.google.com/store/apps/details?id=cc.arduino.sciencejournal) and [iOS](https://apps.apple.com/us/app/arduino-science-journal/id1518014927)). 
 
-## Building the firmware
+## How do I use it?
+1. See `examples/main.cpp`
 
-This project uses [Platform IO](http://platformio.org/get-started). My personal preference to to use Platform IO with VS code.
+2. Add the following to your `platformio.ini` (assuming you are PlatformIO...which I am with VS code):
+```
+lib_deps = 
+    https://github.com/aegis1980/science-journal-esp32.git
+```
+3. And also add this stuff to your `platformio.ini`:
+```
+lib_ignore = 
+	BLEPeripheral
+	ble-sdk-arduino
+board_build.partitions = min_spiffs.csv
+```
+- `lib_ignore`: Means project uses this historic library (imported as part of this library), rather than than one now built in to Arduino framwork
+- `board_build.partitions` : Without this I run out of space when uploading firmware with the  generic ESP32 dev boards I am using.
+
+
+## Modifications to [forked repo](https://github.com/precision/science-journal-arduino/tree/esp32):
+
+* Updated for PlatformIO 2021 (CORE 5.x)
+* Stripped out all the non-ESP32 stuff - refer to[original repo][[sj-arduino]] if you need that stuff.
+* Restrucutred things so packaged up as a [PlatformIO library](./library.json)
+
+
 
 ## License
 
